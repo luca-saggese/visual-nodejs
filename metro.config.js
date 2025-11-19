@@ -16,7 +16,8 @@ module.exports = (async () => {
         'fs': path.resolve(__dirname, 'mocks/fs.js'),
         'esbuild': path.resolve(__dirname, 'mocks/esbuild.js'),
         'path': require.resolve('path-browserify'),
-        'os': require.resolve('os-browserify/browser')
+        'os': require.resolve('os-browserify/browser'),
+        'events': require.resolve('events')
       },
     },
   };
