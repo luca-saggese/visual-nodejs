@@ -11,7 +11,17 @@
   // They will be passed down to the ViewController used by React Native.
   self.initialProps = @{};
 
-  return [super applicationDidFinishLaunching:notification];
+  [super applicationDidFinishLaunching:notification];
+  
+  // Set window size and make it resizable
+  NSWindow *window = [[NSApplication sharedApplication] mainWindow];
+  if (window) {
+    [window setFrame:NSMakeRect(100, 100, 1200, 800) display:YES];
+    [window setMinSize:NSMakeSize(800, 600)];
+    [window setStyleMask:[window styleMask] | NSWindowStyleMaskResizable];
+    [window center];
+    [window makeKeyAndOrderFront:nil];
+  }
 }
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge

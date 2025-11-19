@@ -9,8 +9,16 @@ module.exports = (async () => {
   return {
     transformer: {
       babelTransformerPath: require.resolve('metro-react-native-babel-transformer'),
+      getTransformOptions: async () => ({
+        transform: {
+          experimentalImportSupport: false,
+          inlineRequires: true,
+        },
+      }),
     },
     resolver: {
+      sourceExts: ['macos.js', ...sourceExts],
+      platforms: ['macos', 'ios', 'android'],
       extraNodeModules: {
         'child_process': path.resolve(__dirname, 'mocks/child_process.js'),
         'fs': path.resolve(__dirname, 'mocks/fs.js'),
@@ -20,7 +28,9 @@ module.exports = (async () => {
         'events': require.resolve('events'),
         'crypto': require.resolve('crypto-browserify'),
         'stream': require.resolve('readable-stream'),
-        'buffer': require.resolve('buffer')
+        'buffer': require.resolve('buffer'),
+        'tty': require.resolve('tty-browserify'),
+        'util': require.resolve('util')
       },
     },
   };
