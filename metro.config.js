@@ -17,7 +17,10 @@ module.exports = (async () => {
         'esbuild': path.resolve(__dirname, 'mocks/esbuild.js'),
         'path': require.resolve('path-browserify'),
         'os': require.resolve('os-browserify/browser'),
-        'events': require.resolve('events')
+        'events': require.resolve('events'),
+        'crypto': require.resolve('crypto-browserify'),
+        'stream': require.resolve('readable-stream'),
+        'buffer': require.resolve('buffer')
       },
     },
   };
