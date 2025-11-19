@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, SafeAreaView } from 'react-native';
 import Menu from './Menu';
 import Toolbar from './Toolbar';
 import Toolbox from './Toolbox';
@@ -17,88 +17,141 @@ const Shell = () => {
   useEffect(() => {
       // Initialize a default project on startup for the prototype
       initProject();
-  }, []);
+  }, [initProject]);
 
   return (
-    <View style={styles.container}>
-      {/* Top Bar (Menu) */}
-      <Menu />
-      <Toolbar />
-      
-      <View style={styles.mainContent}>
-        {/* Left Panel */}
-        <View style={styles.leftPanel}>
-          <Toolbox />
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Menu Bar */}
+        <View style={styles.menuBar}>
+          <Menu />
+        </View>
+        
+        {/* Toolbar */}
+        <View style={styles.toolbarBar}>
+          <Toolbar />
+        </View>
+        
+        {/* Main Content Area */}
+        <View style={styles.mainContent}>
+          {/* Left Panel - Toolbox */}
+          <View style={styles.leftPanel}>
+            <Toolbox />
+          </View>
+
+          {/* Center Panel - Editor + Immediate Window */}
+          <View style={styles.centerPanel}>
+            <View style={styles.editorArea}>
+              <EditorArea />
+            </View>
+            <View style={styles.immediateWindow}>
+              <ImmediateWindow />
+            </View>
+          </View>
+
+          {/* Right Panel - Project Explorer + Properties + Form Layout */}
+          <View style={styles.rightPanel}>
+            <View style={styles.projectExplorer}>
+              <ProjectExplorer />
+            </View>
+            <View style={styles.propertiesPanel}>
+              <PropertiesPanel />
+            </View>
+            <View style={styles.formLayout}>
+              <FormLayout />
+            </View>
+          </View>
         </View>
 
-        {/* Center Area (MDI/Editors) */}
-        <View style={styles.centerPanel}>
-          <EditorArea />
-          <ImmediateWindow />
-        </View>
-
-        {/* Right Panel */}
-        <View style={styles.rightPanel}>
-          <View style={styles.rightTop}>
-            <ProjectExplorer />
-          </View>
-          <View style={styles.rightMiddle}>
-            <PropertiesPanel />
-          </View>
-          <View style={styles.rightBottom}>
-            <FormLayout />
-          </View>
+        {/* Status Bar */}
+        <View style={styles.statusBarContainer}>
+          <StatusBar />
         </View>
       </View>
-
-      {/* Status Bar */}
-      <StatusBar />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
   container: {
     flex: 1,
     flexDirection: 'column',
-    backgroundColor: '#C0C0C0', // Classic VB6 gray
+    backgroundColor: '#C0C0C0',
+  },
+  menuBar: {
+    height: 24,
+    backgroundColor: '#E0E0E0',
+    borderBottomWidth: 1,
+    borderBottomColor: '#808080',
+  },
+  toolbarBar: {
+    height: 36,
+    backgroundColor: '#D0D0D0',
+    borderBottomWidth: 1,
+    borderBottomColor: '#808080',
   },
   mainContent: {
     flex: 1,
     flexDirection: 'row',
+    overflow: 'hidden',
   },
+  // Left Panel - Toolbox
   leftPanel: {
-    width: 50,
-    borderRightWidth: 1,
-    borderColor: '#808080',
+    width: 80,
     backgroundColor: '#E0E0E0',
+    borderRightWidth: 1,
+    borderRightColor: '#808080',
   },
+  // Center Panel
   centerPanel: {
     flex: 1,
+    flexDirection: 'column',
     backgroundColor: '#FFFFFF',
+  },
+  editorArea: {
+    flex: 2,
     borderWidth: 1,
     borderColor: '#808080',
     margin: 2,
   },
+  immediateWindow: {
+    height: 150,
+    borderWidth: 1,
+    borderColor: '#808080',
+    margin: 2,
+  },
+  // Right Panel
   rightPanel: {
     width: 250,
-    borderLeftWidth: 1,
-    borderColor: '#808080',
+    overflow: 'hidden',
     flexDirection: 'column',
-  },
-  rightTop: {
-    flex: 1,
-    borderBottomWidth: 1,
-    borderColor: '#808080',
-  },
-  rightMiddle: {
-    flex: 1,
-    borderBottomWidth: 1,
-    borderColor: '#808080',
-  },
-  rightBottom: {
-    height: 150, // Fixed height for Form Layout usually
     backgroundColor: '#E0E0E0',
+    borderLeftWidth: 1,
+    borderLeftColor: '#808080',
+  },
+  projectExplorer: {
+    flex: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: '#808080',
+  },
+  propertiesPanel: {
+    flex: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: '#808080',
+  },
+  formLayout: {
+    height: 150,
+    backgroundColor: '#F0F0F0',
+  },
+  statusBarContainer: {
+    height: 20,
+    backgroundColor: '#C0C0C0',
+    borderTopWidth: 1,
+    borderTopColor: '#808080',
   },
 });
 
