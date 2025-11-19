@@ -6,7 +6,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { useStore } from '../store'; // Adjust the import based on your project structure
+import { useStore } from '../core/store'; // Adjust the import based on your project structure
 
 const HTML_CONTENT = `
 <!DOCTYPE html>
