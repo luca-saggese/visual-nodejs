@@ -6,6 +6,9 @@
   "scripts": {
     "start": "react-native start",
     "macos": "react-native run-macos",
+    "build": "react-native run-macos --configuration Release",
+    "clean": "cd macos && rm -rf build Pods Podfile.lock && pod install",
+    "lint": "eslint .",
     "test": "jest"
   },
   "dependencies": {
