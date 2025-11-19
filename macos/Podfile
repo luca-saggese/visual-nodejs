@@ -1,6 +1,123 @@
 require_relative '../node_modules/react-native-macos/scripts/react_native_pods'
 require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
 
+# Override use_react_native! to fix boost checksum
+def use_react_native! (
+  path: "../node_modules/react-native",
+  fabric_enabled: false,
+  new_arch_enabled: ENV['RCT_NEW_ARCH_ENABLED'] == '1',
+  production: ENV['PRODUCTION'] == '1',
+  hermes_enabled: ENV['USE_HERMES'] && ENV['USE_HERMES'] == '0' ? false : true,
+  flipper_configuration: FlipperConfiguration.disabled,
+  app_path: '..',
+  config_file_dir: '',
+  ios_folder: 'ios'
+)
+
+  # Current target definition is provided by Cocoapods and it refers to the target
+  # that has invoked the `use_react_native!` function.
+  ReactNativePodsUtils.detect_use_frameworks(current_target_definition)
+
+  CodegenUtils.clean_up_build_folder(app_path, ios_folder, $CODEGEN_OUTPUT_DIR)
+
+  # We are relying on this flag also in third parties libraries to proper install dependencies.
+  # Better to rely and enable this environment flag if the new architecture is turned on using flags.
+  ENV['RCT_NEW_ARCH_ENABLED'] = new_arch_enabled ? "1" : "0"
+  fabric_enabled = fabric_enabled || new_arch_enabled
+  ENV['USE_HERMES'] = hermes_enabled ? "1" : "0"
+
+  prefix = path
+
+  ReactNativePodsUtils.warn_if_not_on_arm64()
+
+  # The Pods which should be included in all projects
+  pod 'FBLazyVector', :path => "#{prefix}/Libraries/FBLazyVector"
+  pod 'FBReactNativeSpec', :path => "#{prefix}/React/FBReactNativeSpec"
+  pod 'RCTRequired', :path => "#{prefix}/Libraries/RCTRequired"
+  pod 'RCTTypeSafety', :path => "#{prefix}/Libraries/TypeSafety", :modular_headers => true
+  pod 'React', :path => "#{prefix}/"
+  pod 'React-Core', :path => "#{prefix}/"
+  pod 'React-CoreModules', :path => "#{prefix}/React/CoreModules"
+  pod 'React-RCTAppDelegate', :path => "#{prefix}/Libraries/AppDelegate"
+  pod 'React-RCTActionSheet', :path => "#{prefix}/Libraries/ActionSheetIOS"
+  pod 'React-RCTAnimation', :path => "#{prefix}/Libraries/NativeAnimation"
+  pod 'React-RCTBlob', :path => "#{prefix}/Libraries/Blob"
+  pod 'React-RCTImage', :path => "#{prefix}/Libraries/Image"
+  pod 'React-RCTLinking', :path => "#{prefix}/Libraries/LinkingIOS"
+  pod 'React-RCTNetwork', :path => "#{prefix}/Libraries/Network"
+  pod 'React-RCTSettings', :path => "#{prefix}/Libraries/Settings"
+  pod 'React-RCTText', :path => "#{prefix}/Libraries/Text"
+  pod 'React-RCTVibration', :path => "#{prefix}/Libraries/Vibration"
+  pod 'React-Core/RCTWebSocket', :path => "#{prefix}/"
+
+  pod 'React-cxxreact', :path => "#{prefix}/ReactCommon/cxxreact"
+
+  if hermes_enabled
+    setup_hermes!(:react_native_path => prefix, :fabric_enabled => fabric_enabled)
+  else
+    setup_jsc!(:react_native_path => prefix, :fabric_enabled => fabric_enabled)
+  end
+
+  pod 'React-jsiexecutor', :path => "#{prefix}/ReactCommon/jsiexecutor"
+  pod 'React-jsinspector', :path => "#{prefix}/ReactCommon/jsinspector"
+
+  pod 'React-callinvoker', :path => "#{prefix}/ReactCommon/callinvoker"
+  pod 'React-runtimeexecutor', :path => "#{prefix}/ReactCommon/runtimeexecutor"
+  pod 'React-perflogger', :path => "#{prefix}/ReactCommon/reactperflogger"
+  pod 'React-logger', :path => "#{prefix}/ReactCommon/logger"
+  pod 'ReactCommon/turbomodule/core', :path => "#{prefix}/ReactCommon", :modular_headers => true
+  pod 'Yoga', :path => "#{prefix}/ReactCommon/yoga", :modular_headers => true
+
+  pod 'DoubleConversion', :podspec => "#{prefix}/third-party-podspecs/DoubleConversion.podspec"
+  pod 'glog', :podspec => "#{prefix}/third-party-podspecs/glog.podspec"
+  
+  # MODIFIED: Use local podspec for boost
+  pod 'boost', :podspec => "./local-podspecs/boost.podspec"
+  
+  pod 'RCT-Folly', :podspec => "#{prefix}/third-party-podspecs/RCT-Folly.podspec", :modular_headers => true
+
+  run_codegen!(
+    app_path,
+    config_file_dir,
+    :new_arch_enabled => new_arch_enabled,
+    :disable_codegen => ENV['DISABLE_CODEGEN'] == '1',
+    :react_native_path => prefix,
+    :fabric_enabled => fabric_enabled,
+    :hermes_enabled => hermes_enabled,
+    :codegen_output_dir => $CODEGEN_OUTPUT_DIR,
+    :package_json_file => File.join(prefix, "package.json"),
+    :folly_version => $FOLLY_VERSION
+  )
+
+  pod 'React-Codegen', :path => $CODEGEN_OUTPUT_DIR, :modular_headers => true
+
+  if fabric_enabled
+    checkAndGenerateEmptyThirdPartyProvider!(prefix, new_arch_enabled, $CODEGEN_OUTPUT_DIR)
+    setup_fabric!(:react_native_path => prefix)
+  else
+    relative_installation_root = Pod::Config.instance.installation_root.relative_path_from(Pathname.pwd)
+    build_codegen!(prefix, relative_installation_root)
+  end
+
+  # CocoaPods `configurations` option ensures that the target is copied only for the specified configurations,
+  # but those dependencies are still built.
+  # Flipper doesn't currently compile for release https://github.com/facebook/react-native/issues/33764
+  # Setting the production flag to true when build for production make sure that we don't install Flipper in the app in the first place.
+  if flipper_configuration.flipper_enabled && !production
+    install_flipper_dependencies(prefix)
+    use_flipper_pods(flipper_configuration.versions, :configurations => flipper_configuration.configurations)
+  end
+
+  pods_to_update = LocalPodspecPatch.pods_to_update(:react_native_path => prefix)
+  if !pods_to_update.empty?
+    if Pod::Lockfile.public_instance_methods.include?(:detect_changes_with_podfile)
+      Pod::Lockfile.prepend(LocalPodspecPatch)
+    else
+      Pod::UI.warn "Automatically updating #{pods_to_update.join(", ")} has failed, please run `pod update #{pods_to_update.join(" ")} --no-repo-update` manually to fix the issue."
+    end
+  end
+end
+
 prepare_react_native_project!
 
 target 'visual-nodejs-macOS' do
