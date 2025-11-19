@@ -1,15 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import Panel from './Panel';
 import useStore from '../core/store';
 
 const ProjectExplorer = () => {
   const { files, setActiveFile } = useStore();
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Project Explorer</Text>
-      </View>
+    <Panel title="Project Explorer" titleBarColor="#000080">
       <ScrollView style={styles.content}>
         <Text style={styles.projectNode}>Project1 (vbp)</Text>
         <View style={{ paddingLeft: 10 }}>
@@ -23,23 +21,11 @@ const ProjectExplorer = () => {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </Panel>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    backgroundColor: '#000080', // Active title bar color
-    padding: 2,
-  },
-  headerText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
   content: {
     flex: 1,
     backgroundColor: 'white',

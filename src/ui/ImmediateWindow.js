@@ -4,6 +4,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, ScrollView, StyleSheet } from 'react-native';
+import Panel from './Panel';
 import NodeBridge from '../bridge/node-bridge';
 import NodeInspectorClient from '../debugger/node-inspector';
 
@@ -50,10 +51,7 @@ const ImmediateWindow = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Immediate</Text>
-      </View>
+    <Panel title="Immediate" titleBarColor="#000080">
       <ScrollView style={styles.outputArea}>
         {output.map((line, i) => (
           <Text key={i} style={styles.outputText}>{line}</Text>
@@ -69,29 +67,15 @@ const ImmediateWindow = () => {
             placeholderTextColor="#999"
         />
       </View>
-    </View>
+    </Panel>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    height: 150,
-    borderTopWidth: 1,
-    borderColor: '#808080',
-    backgroundColor: 'white',
-  },
-  header: {
-    backgroundColor: '#999', // Inactive title bar usually, or active if focused
-    padding: 2,
-  },
-  headerText: {
-    color: 'white',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
   outputArea: {
     flex: 1,
     padding: 5,
+    backgroundColor: 'white',
   },
   outputText: {
     fontFamily: 'Menlo',
@@ -102,6 +86,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: '#eee',
     padding: 2,
+    backgroundColor: 'white',
   },
   input: {
     height: 24,

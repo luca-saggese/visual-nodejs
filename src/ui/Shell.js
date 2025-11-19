@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, SafeAreaView } from 'react-native';
 import Menu from './Menu';
 import Toolbar from './Toolbar';
@@ -9,10 +9,18 @@ import FormLayout from './FormLayout';
 import EditorArea from './EditorArea';
 import ImmediateWindow from './ImmediateWindow';
 import StatusBar from './StatusBar';
+import ResizableSplitter from './ResizableSplitter';
 import useStore from '../core/store';
 
 const Shell = () => {
   const { initProject } = useStore();
+  
+  // Panel widths and heights state
+  const [leftPanelWidth, setLeftPanelWidth] = useState(80);
+  const [rightPanelWidth, setRightPanelWidth] = useState(250);
+  const [immediateWindowHeight, setImmediateWindowHeight] = useState(150);
+  const [projectExplorerHeight, setProjectExplorerHeight] = useState(200);
+  const [propertiesPanelHeight, setPropertiesPanelHeight] = useState(200);
 
   useEffect(() => {
       // Initialize a default project on startup for the prototype
@@ -35,28 +43,71 @@ const Shell = () => {
         {/* Main Content Area */}
         <View style={styles.mainContent}>
           {/* Left Panel - Toolbox */}
-          <View style={styles.leftPanel}>
+          <View style={[styles.leftPanel, { width: leftPanelWidth }]}>
             <Toolbox />
           </View>
+
+          {/* Splitter between Left and Center */}
+          <ResizableSplitter
+            direction="horizontal"
+            onResize={(delta) => {
+              setLeftPanelWidth(prev => Math.max(60, Math.min(300, prev + delta)));
+            }}
+          />
 
           {/* Center Panel - Editor + Immediate Window */}
           <View style={styles.centerPanel}>
             <View style={styles.editorArea}>
               <EditorArea />
             </View>
-            <View style={styles.immediateWindow}>
+            
+            {/* Splitter between Editor and Immediate Window */}
+            <ResizableSplitter
+              direction="vertical"
+              onResize={(delta) => {
+                setImmediateWindowHeight(prev => Math.max(100, Math.min(400, prev - delta)));
+              }}
+            />
+            
+            <View style={[styles.immediateWindow, { height: immediateWindowHeight }]}>
               <ImmediateWindow />
             </View>
           </View>
 
+          {/* Splitter between Center and Right */}
+          <ResizableSplitter
+            direction="horizontal"
+            onResize={(delta) => {
+              setRightPanelWidth(prev => Math.max(200, Math.min(500, prev - delta)));
+            }}
+          />
+
           {/* Right Panel - Project Explorer + Properties + Form Layout */}
-          <View style={styles.rightPanel}>
-            <View style={styles.projectExplorer}>
+          <View style={[styles.rightPanel, { width: rightPanelWidth }]}>
+            <View style={[styles.projectExplorer, { height: projectExplorerHeight }]}>
               <ProjectExplorer />
             </View>
-            <View style={styles.propertiesPanel}>
+            
+            {/* Splitter between Project Explorer and Properties */}
+            <ResizableSplitter
+              direction="vertical"
+              onResize={(delta) => {
+                setProjectExplorerHeight(prev => Math.max(100, Math.min(400, prev + delta)));
+              }}
+            />
+            
+            <View style={[styles.propertiesPanel, { height: propertiesPanelHeight }]}>
               <PropertiesPanel />
             </View>
+            
+            {/* Splitter between Properties and Form Layout */}
+            <ResizableSplitter
+              direction="vertical"
+              onResize={(delta) => {
+                setPropertiesPanelHeight(prev => Math.max(100, Math.min(400, prev + delta)));
+              }}
+            />
+            
             <View style={styles.formLayout}>
               <FormLayout />
             </View>
@@ -101,7 +152,6 @@ const styles = StyleSheet.create({
   },
   // Left Panel - Toolbox
   leftPanel: {
-    width: 80,
     backgroundColor: '#E0E0E0',
     borderRightWidth: 1,
     borderRightColor: '#808080',
@@ -113,20 +163,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   editorArea: {
-    flex: 2,
+    flex: 1,
     borderWidth: 1,
     borderColor: '#808080',
     margin: 2,
   },
   immediateWindow: {
-    height: 150,
     borderWidth: 1,
     borderColor: '#808080',
     margin: 2,
   },
   // Right Panel
   rightPanel: {
-    width: 250,
     overflow: 'hidden',
     flexDirection: 'column',
     backgroundColor: '#E0E0E0',
@@ -134,17 +182,15 @@ const styles = StyleSheet.create({
     borderLeftColor: '#808080',
   },
   projectExplorer: {
-    flex: 1,
     borderBottomWidth: 1,
     borderBottomColor: '#808080',
   },
   propertiesPanel: {
-    flex: 1,
     borderBottomWidth: 1,
     borderBottomColor: '#808080',
   },
   formLayout: {
-    height: 150,
+    flex: 1,
     backgroundColor: '#F0F0F0',
   },
   statusBarContainer: {

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ScrollView } from 'react-native';
+import Panel from './Panel';
 import useStore from '../core/store';
 
 const PropertiesPanel = () => {
@@ -27,11 +28,8 @@ const PropertiesPanel = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Properties - {selectedControl || 'Form1'}</Text>
-      </View>
-      <View style={styles.content}>
+    <Panel title={`Properties - ${selectedControl || 'Form1'}`} titleBarColor="#000080">
+      <ScrollView style={styles.content}>
         {Object.entries(properties).map(([key, value]) => (
           <View key={key} style={styles.row}>
             <Text style={styles.label}>{key}</Text>
@@ -43,8 +41,8 @@ const PropertiesPanel = () => {
             />
           </View>
         ))}
-      </View>
-    </View>
+      </ScrollView>
+    </Panel>
   );
 };
 

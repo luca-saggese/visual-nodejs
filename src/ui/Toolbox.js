@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import Panel from './Panel';
 import useStore from '../core/store';
 
 const Toolbox = () => {
@@ -7,7 +8,8 @@ const Toolbox = () => {
   const tools = ['Pointer', 'Label', 'Button', 'TextBox', 'Frame', 'CheckBox', 'ComboBox'];
 
   return (
-    <ScrollView style={styles.container}>
+    <Panel title="Toolbox" titleBarColor="#808080" style={styles.panel}>
+      <ScrollView style={styles.container}>
       {tools.map((tool, index) => (
         <TouchableOpacity 
             key={index} 
@@ -20,14 +22,19 @@ const Toolbox = () => {
           {/* <Text style={{fontSize: 8}}>{tool}</Text> */}
         </TouchableOpacity>
       ))}
-    </ScrollView>
+      </ScrollView>
+    </Panel>
   );
 };
 
 const styles = StyleSheet.create({
+  panel: {
+    backgroundColor: '#E0E0E0',
+  },
   container: {
     flex: 1,
     padding: 2,
+    backgroundColor: '#E0E0E0',
   },
   toolItem: {
     width: 40,

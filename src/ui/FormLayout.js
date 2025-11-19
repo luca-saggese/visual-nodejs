@@ -1,12 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import Panel from './Panel';
 
 const FormLayout = () => {
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Form Layout</Text>
-      </View>
+    <Panel title="Form Layout" titleBarColor="#808080" style={styles.panel}>
       <View style={styles.content}>
         <View style={styles.monitor}>
             <View style={styles.formPreview}>
@@ -14,23 +12,13 @@ const FormLayout = () => {
             </View>
         </View>
       </View>
-    </View>
+    </Panel>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  panel: {
     backgroundColor: '#E0E0E0',
-  },
-  header: {
-    backgroundColor: '#999',
-    padding: 2,
-  },
-  headerText: {
-    color: 'white',
-    fontSize: 11,
-    fontWeight: 'bold',
   },
   content: {
     flex: 1,
