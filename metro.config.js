@@ -8,7 +8,7 @@ module.exports = (async () => {
 
   return {
     transformer: {
-      babelTransformerPath: require.resolve('react-native-babel-transformer'),
+      babelTransformerPath: require.resolve('metro-react-native-babel-transformer'),
     },
     resolver: {
       extraNodeModules: {
