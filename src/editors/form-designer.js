@@ -3,35 +3,48 @@
  * A visual surface for dragging and dropping controls.
  */
 
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Pressable, PanResponder } from 'react-native';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, PanResponder, Animated } from 'react-native';
 import useStore from '../core/store';
 
 const DraggableControl = ({ control, isSelected, onSelect, onUpdate, onDoublePress }) => {
-    const panResponder = useRef(
+    const pan = useRef(new Animated.ValueXY()).current;
+
+    useEffect(() => {
+        pan.setValue({ x: 0, y: 0 });
+    }, [control.x, control.y]);
+
+    const panResponder = useMemo(() => 
         PanResponder.create({
             onStartShouldSetPanResponder: () => true,
             onPanResponderGrant: () => {
                 onSelect(control.id);
+                pan.setOffset({
+                    x: pan.x._value,
+                    y: pan.y._value
+                });
+                pan.setValue({ x: 0, y: 0 });
             },
-            onPanResponderMove: (evt, gestureState) => {
-                // Optional: Visual feedback during drag (using setNativeProps or local state)
-            },
+            onPanResponderMove: Animated.event(
+                [null, { dx: pan.x, dy: pan.y }],
+                { useNativeDriver: false }
+            ),
             onPanResponderRelease: (evt, gestureState) => {
                 if (Math.abs(gestureState.dx) < 5 && Math.abs(gestureState.dy) < 5) {
                     // It was a tap, check for double tap logic here or in parent
                     onDoublePress(control.id);
+                    pan.setValue({ x: 0, y: 0 });
                 } else {
                     // It was a drag
                     onUpdate(control.id, 'Left', control.x + gestureState.dx);
                     onUpdate(control.id, 'Top', control.y + gestureState.dy);
                 }
             }
-        })
-    ).current;
+        }), [control, onSelect, onUpdate, onDoublePress, pan]
+    );
 
     return (
-        <View
+        <Animated.View
             {...panResponder.panHandlers}
             style={[
                 styles.control,
@@ -42,6 +55,7 @@ const DraggableControl = ({ control, isSelected, onSelect, onUpdate, onDoublePre
                     height: control.height,
                     borderColor: isSelected ? '#0000FF' : '#999',
                     borderWidth: isSelected ? 2 : 1,
+                    transform: pan.getTranslateTransform()
                 },
             ]}
         >
@@ -49,7 +63,7 @@ const DraggableControl = ({ control, isSelected, onSelect, onUpdate, onDoublePre
                 {control.type === 'Button' ? control.text : `[${control.text}]`}
             </Text>
             {isSelected && <View style={styles.resizeHandle} />}
-        </View>
+        </Animated.View>
     );
 };
 

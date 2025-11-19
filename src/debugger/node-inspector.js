@@ -3,8 +3,6 @@
  * Connects to the Node.js Inspector Protocol to support debugging features.
  */
 
-const WebSocket = require('ws');
-
 class NodeInspectorClient {
   constructor() {
     this.ws = null;
@@ -20,28 +18,39 @@ class NodeInspectorClient {
     console.log(`Debugger: Connecting to ${url}`);
     
     const tryConnect = () => {
-        this.ws = new WebSocket(url);
+        try {
+            this.ws = new WebSocket(url);
 
-        this.ws.on('open', () => {
-          this.isConnected = true;
-          console.log('Debugger: Connected');
-          this.enable();
-        });
+            this.ws.onopen = () => {
+                this.isConnected = true;
+                console.log('Debugger: Connected');
+                this.enable();
+            };
 
-        this.ws.on('message', (data) => {
-          const message = JSON.parse(data);
-          this.handleMessage(message);
-        });
+            this.ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                this.handleMessage(message);
+            };
 
-        this.ws.on('error', (err) => {
-            console.log('Debugger connection error, retrying...', err.message);
+            this.ws.onerror = (err) => {
+                console.log('Debugger connection error, retrying...', err.message);
+                // Retry is handled in onclose usually for WebSockets, or we can retry here
+            };
+            
+            this.ws.onclose = () => {
+                const wasConnected = this.isConnected;
+                this.isConnected = false;
+                console.log('Debugger: Disconnected');
+                
+                // If we were never connected, it might be a connection failure, so retry
+                if (!wasConnected) {
+                    setTimeout(tryConnect, 1000);
+                }
+            };
+        } catch (e) {
+            console.log('Debugger: Failed to create WebSocket', e);
             setTimeout(tryConnect, 1000);
-        });
-        
-        this.ws.on('close', () => {
-            this.isConnected = false;
-            console.log('Debugger: Disconnected');
-        });
+        }
     };
 
     tryConnect();
