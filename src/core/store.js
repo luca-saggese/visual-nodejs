@@ -8,6 +8,8 @@ import standardExe from '../templates/standard-exe';
 import IntelliSenseGenerator from './intellisense';
 import ProjectManager from './project-manager';
 import NodeBridge from '../bridge/node-bridge';
+import Compiler from '../compiler/ide-compiler';
+import NodeInspectorClient from '../debugger/node-inspector';
 
 const useStore = create((set, get) => ({
   // Project State
@@ -72,6 +74,47 @@ const useStore = create((set, get) => ({
   },
 
   setIsRunning: (running) => set({ isRunning: running }),
+
+  // Project Actions
+  runProject: () => {
+      const { fileContents } = get();
+      // 1. Compile/Build
+      const buildPath = Compiler.buildRun(fileContents);
+      
+      // 2. Run via Bridge
+      NodeBridge.runProject(buildPath);
+      set({ isRunning: true });
+
+      // 3. Connect Debugger
+      // Wait a bit for the process to spawn
+      setTimeout(() => {
+          // Node default inspector port is 9229. 
+          // The UUID is usually required, but for local dev we can often just hit the /json/list endpoint to find it,
+          // or if we control the launch, we might not need it if we use a specific protocol.
+          // However, 'ws://localhost:9229/uuid' is standard.
+          // For this prototype, we'll assume we can connect to the root or fetch the list.
+          // Actually, node inspector usually requires the UUID.
+          // A simpler approach for the prototype is to just rely on the IPC bridge for "debugging" (eval)
+          // and use this client for advanced stuff later.
+          // Let's try to connect to the standard port.
+          
+          // To get the UUID, we can fetch http://localhost:9229/json/list
+          fetch('http://localhost:9229/json/list')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.length > 0 && data[0].webSocketDebuggerUrl) {
+                    NodeInspectorClient.connect(data[0].webSocketDebuggerUrl);
+                }
+            })
+            .catch(err => console.log('Failed to fetch debug info', err));
+      }, 1000);
+  },
+
+  stopProject: () => {
+      NodeBridge.stopProject();
+      set({ isRunning: false });
+      // Disconnect debugger if needed
+  },
 
   addEventHandler: (controlId, eventName) => set((state) => {
       const fileName = 'Form1.js'; // Hardcoded for prototype

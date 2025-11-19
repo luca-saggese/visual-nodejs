@@ -1,29 +1,19 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import NodeBridge from '../bridge/node-bridge';
 import useStore from '../core/store';
-import Compiler from '../compiler/ide-compiler';
 
 const Toolbar = () => {
-  const { fileContents } = useStore();
-
-  const handleRun = () => {
-      // 1. Compile/Build
-      const buildPath = Compiler.buildRun(fileContents);
-      
-      // 2. Run via Bridge
-      NodeBridge.runProject(buildPath);
-  };
+  const { runProject, stopProject } = useStore();
 
   return (
     <View style={styles.toolbar}>
-      <TouchableOpacity style={styles.button} onPress={handleRun}>
+      <TouchableOpacity style={styles.button} onPress={runProject}>
         <Text>▶ Run</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.button}>
         <Text>⏸ Pause</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => NodeBridge.stopProject()}>
+      <TouchableOpacity style={styles.button} onPress={stopProject}>
         <Text>⏹ Stop</Text>
       </TouchableOpacity>
       <View style={styles.separator} />

@@ -6,6 +6,7 @@
 const EventEmitter = require('events');
 const cp = require('child_process'); 
 const path = require('path');
+const NodeInspectorClient = require('../debugger/node-inspector');
 
 class NodeBridge extends EventEmitter {
   constructor() {
@@ -28,18 +29,16 @@ class NodeBridge extends EventEmitter {
     // 2. Spawn the process
     try {
         // We pass the project path as an argument to the runner
-        // For the new build system, we want to run 'start_debug.js' inside the build directory
-        // But our runner.js expects a project path and looks for package.json.
-        // Let's modify how we call it.
-        
-        // We'll tell runner to execute 'start_debug.js' directly if it exists in the target path
-        
-        this.activeProcess = cp.spawn('node', [runnerPath, projectPath], {
+        this.activeProcess = cp.spawn('node', ['--inspect=9229', runnerPath, projectPath], {
             cwd: projectPath || process.cwd(),
             stdio: ['pipe', 'pipe', 'pipe', 'ipc'] // Enable IPC for messaging
         });
 
         this.emit('stdout', `Process spawned with PID: ${this.activeProcess.pid}`);
+        this.emit('stdout', `Debugger listening on port 9229`);
+
+        // Connect the debugger client
+        NodeInspectorClient.connect('ws://localhost:9229');
 
         // 3. Listen to Output
         this.activeProcess.stdout.on('data', (data) => {
@@ -73,6 +72,7 @@ class NodeBridge extends EventEmitter {
       console.log('Bridge: Stopping project...');
       this.activeProcess.kill();
       this.activeProcess = null;
+      NodeInspectorClient.disconnect();
       this.emit('stdout', 'Process stopped by user.');
     }
   }

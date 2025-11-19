@@ -3,14 +3,14 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import useStore from '../core/store';
 
 const Menu = () => {
-  const { saveAll } = useStore();
+  const { saveAll, runProject } = useStore();
   const menus = [
       { label: 'File', action: null }, 
       { label: 'Save', action: saveAll }, // Simplified for prototype: Top level Save
       { label: 'Edit', action: null }, 
       { label: 'View', action: null }, 
       { label: 'Project', action: null }, 
-      { label: 'Run', action: null }
+      { label: 'Run', action: runProject }
   ];
 
   return (

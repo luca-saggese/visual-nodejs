@@ -5,30 +5,47 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, ScrollView, StyleSheet } from 'react-native';
 import NodeBridge from '../bridge/node-bridge';
+import NodeInspectorClient from '../debugger/node-inspector';
 
 const ImmediateWindow = () => {
   const [input, setInput] = useState('');
   const [output, setOutput] = useState(['Immediate Window ready.']);
 
   useEffect(() => {
-    // Listen for output from the bridge
+    // Listen for output from the bridge (stdout/stderr)
     const handleOutput = (data) => {
         setOutput(prev => [...prev, data]);
     };
     
     NodeBridge.on('stdout', handleOutput);
     
-    // Cleanup not implemented in this simple mock bridge, but would be needed
+    return () => {
+        // Cleanup listener (if NodeBridge supported removeListener)
+    };
   }, []);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!input.trim()) return;
     
     const command = input;
-    // setOutput(prev => [...prev, `> ${command}`]); // Bridge echoes this usually
+    setOutput(prev => [...prev, `> ${command}`]);
     
-    // Send to bridge
-    NodeBridge.sendCommand(command);
+    // Try to use Inspector first if connected, else fall back to Bridge IPC
+    if (NodeInspectorClient.isConnected) {
+        try {
+            const response = await NodeInspectorClient.evaluate(command);
+            // response.result is { type: 'string', value: '...' }
+            const resultValue = response.result.value !== undefined ? String(response.result.value) : response.result.description;
+            setOutput(prev => [...prev, resultValue]);
+        } catch (err) {
+            setOutput(prev => [...prev, `Error: ${err.message}`]);
+        }
+    } else {
+        // Fallback to IPC
+        NodeBridge.sendCommand(command);
+        // IPC response is handled via 'stdout' event usually, or we need to wire up a specific listener for eval results
+    }
+    
     setInput('');
   };
 

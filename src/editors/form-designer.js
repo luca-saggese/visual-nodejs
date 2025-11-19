@@ -3,25 +3,69 @@
  * A visual surface for dragging and dropping controls.
  */
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, PanResponder } from 'react-native';
 import useStore from '../core/store';
 
+const DraggableControl = ({ control, isSelected, onSelect, onUpdate, onDoublePress }) => {
+    const panResponder = useRef(
+        PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onPanResponderGrant: () => {
+                onSelect(control.id);
+            },
+            onPanResponderMove: (evt, gestureState) => {
+                // Optional: Visual feedback during drag (using setNativeProps or local state)
+            },
+            onPanResponderRelease: (evt, gestureState) => {
+                if (Math.abs(gestureState.dx) < 5 && Math.abs(gestureState.dy) < 5) {
+                    // It was a tap, check for double tap logic here or in parent
+                    onDoublePress(control.id);
+                } else {
+                    // It was a drag
+                    onUpdate(control.id, 'Left', control.x + gestureState.dx);
+                    onUpdate(control.id, 'Top', control.y + gestureState.dy);
+                }
+            }
+        })
+    ).current;
+
+    return (
+        <View
+            {...panResponder.panHandlers}
+            style={[
+                styles.control,
+                {
+                    left: control.x,
+                    top: control.y,
+                    width: control.width,
+                    height: control.height,
+                    borderColor: isSelected ? '#0000FF' : '#999',
+                    borderWidth: isSelected ? 2 : 1,
+                },
+            ]}
+        >
+            <Text style={styles.controlText}>
+                {control.type === 'Button' ? control.text : `[${control.text}]`}
+            </Text>
+            {isSelected && <View style={styles.resizeHandle} />}
+        </View>
+    );
+};
+
 const FormDesigner = () => {
-  const { selectedControl, setSelectedControl, controls, addControl, selectedTool, setSelectedTool, addEventHandler } = useStore();
+  const { selectedControl, setSelectedControl, controls, addControl, selectedTool, setSelectedTool, addEventHandler, updateControlProperty } = useStore();
   const [lastTap, setLastTap] = useState(null);
 
-  const handleControlPress = (controlId) => {
-    const now = Date.now();
-    const DOUBLE_PRESS_DELAY = 300;
-    
-    if (lastTap && (now - lastTap) < DOUBLE_PRESS_DELAY) {
-        // Double tap detected
-        addEventHandler(controlId, 'Click');
-    } else {
-        setLastTap(now);
-        setSelectedControl(controlId);
-    }
+  const handleDoublePress = (controlId) => {
+      const now = Date.now();
+      const DOUBLE_PRESS_DELAY = 300;
+      if (lastTap && (now - lastTap) < DOUBLE_PRESS_DELAY) {
+          addEventHandler(controlId, 'Click');
+          setLastTap(null);
+      } else {
+          setLastTap(now);
+      }
   };
 
   const handleCanvasPress = (e) => {
@@ -49,27 +93,14 @@ const FormDesigner = () => {
   return (
     <Pressable style={styles.canvas} onPress={handleCanvasPress}>
       {controls.map((control) => (
-        <TouchableOpacity
-          key={control.id}
-          style={[
-            styles.control,
-            {
-              left: control.x,
-              top: control.y,
-              width: control.width,
-              height: control.height,
-              borderColor: selectedControl === control.id ? '#0000FF' : '#999',
-              borderWidth: selectedControl === control.id ? 2 : 1,
-            },
-          ]}
-          onPress={() => handleControlPress(control.id)}
-        >
-          <Text style={styles.controlText}>
-            {control.type === 'Button' ? control.text : `[${control.text}]`}
-          </Text>
-          {/* Resize handles would go here */}
-          {selectedControl === control.id && <View style={styles.resizeHandle} />}
-        </TouchableOpacity>
+        <DraggableControl
+            key={control.id}
+            control={control}
+            isSelected={selectedControl === control.id}
+            onSelect={setSelectedControl}
+            onUpdate={updateControlProperty}
+            onDoublePress={handleDoublePress}
+        />
       ))}
     </Pressable>
   );
